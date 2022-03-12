@@ -1,9 +1,9 @@
-import { Box, Grid, GridItem } from '@chakra-ui/react';
+import { Box, Center, Flex, Grid, GridItem, Input } from '@chakra-ui/react';
 import { Observable } from 'rxjs'
 import type { NextPage } from 'next';
 
 import { SistemaOperativo } from '../class/SistemaOperativo';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ContenedorSeccion } from '../component/seccion/ContenedorSeccion';
 import { SeccionEjecucion } from '../component/seccion/SeccionEjecucion';
 import { TituloSeccion } from '../component/seccion/TituloSeccion';
@@ -12,12 +12,15 @@ import { SeccionNuevos } from '../component/seccion/SeccionNuevos';
 import { SeccionBloqueados } from '../component/seccion/SeccionBloqueados';
 import { SeccionTerminados } from '../component/seccion/SeccionTerminados';
 import { SeccionInformacion } from '../component/SeccionInformacion';
+import { Boton } from '../component/Boton';
 
 // *****************************************************************************************************************************
 const VELOCIDAD = 1000;
+const MENSAJE_PROGRAMA_TERMINADO = 'Programa Finalizado';
 export const GLOBAL_COLOR = '#DAF7DC';
 export const GLOBAL_SECONDARY_COLOR = '#84DCC6';
 export const GLOBAL_BORDER_RADIUS = 15;
+
 // === App =====================================================================================================================
 const sistemaOperativoOriginal = new SistemaOperativo(10, null, [], [], [], 0, [], 'Activo');
 
@@ -35,6 +38,15 @@ const Home: NextPage = () => {
   const [isPausa, setIsPausa] = useState<boolean>(false);
   const [isNuevoProceso, setIsNuevoProceso] = useState<boolean>(false);
   const [isTablaProcesos, setIsTablaProcesos] = useState<boolean>(false);
+
+  const [inputValue, setInputValue] = useState<string>('');
+  const [mensaje, setMensaje] = useState<string>('');
+
+  const [isEvaluado, setIsEvaluado] = useState<boolean>(false);
+  const [isComenzado, setIsComenzado] = useState<boolean>(false);
+  const [isTerminado, setIsTerminado] = useState<boolean>(false);
+
+
 
   // --- Effects ------------------------------------------------------------------------------------
   useEffect(() => {
@@ -59,6 +71,23 @@ const Home: NextPage = () => {
 
     return () => clearInterval(actualizarSistemaOperativoMostrado);
   });
+
+  // --- Handlers --------------------------------------------------------------------------------------
+  const handleChange = (e: React.FormEvent<HTMLInputElement>) => { setInputValue((e.target as HTMLInputElement).value); }
+  const handleInterrupcion = () => { setIsInterrupcion(!isInterrupcion); }
+  const handleError = () => { setIsError(!isError); }
+  const handleEvaluar = () => {
+    if (parseInt(inputValue) && parseInt(inputValue) > 0) {
+      setIsEvaluado(!isEvaluado);
+      setMensaje('Cantidad De Procesos Válida');
+
+      sistemaOperativoOriginal.setCantidadProcesos(parseInt(inputValue));
+      sistemaOperativoOriginal.inicializar();
+
+    } else {
+      setMensaje('Cantidad De Procesos Inválida');
+    }
+  }
 
   return (
     <Grid h='100vh' templateRows='repeat(10, 1fr)' templateColumns='repeat(10, 1fr)'>
@@ -89,7 +118,53 @@ const Home: NextPage = () => {
         <ContenedorSeccion>
           <TituloSeccion nombreSeccion='Controles' />
           <Box w='100%' h='100%' py={2} borderColor='gray.300'>
+            <Center>
+              {!isEvaluado &&
+                <Input
+                  m={10}
+                  mt={50}
+                  placeholder={'Cantidad de procesos...'}
+                  value={inputValue}
+                  onChange={handleChange}
+                  borderRadius={GLOBAL_BORDER_RADIUS}
+                  padding={5}
+                />
+              }
+            </Center>
 
+            {
+              !isEvaluado
+                ?
+                <Center>
+                  <Boton contenido={'Evaluar Cantidad (Dar Click Aquí)'} width={'50%'} callback={handleEvaluar} />
+                </Center>
+                : null
+            }
+
+            {
+              (isEvaluado && !isComenzado) &&
+              <Flex mt={10}>
+                <Boton contenido={'Comenzar (Tecla C)'} width={'100%'} callback={() => setIsComenzado(!isComenzado)} />
+              </Flex>
+            }
+
+            {(isComenzado && !isTerminado) &&
+              <Flex mt={10}>
+                <Boton contenido={`${isPausa ? 'Continuar (Tecla P)' : 'Pausar (Tecla P)'}`} width={'100%'} callback={() => setIsPausa(!isPausa)} />
+                <Boton contenido={'Interrupción (Tecla I)'} width={'100%'} callback={handleInterrupcion} />
+                <Boton contenido={'Marcar Error (Tecla E)'} width={'100%'} callback={handleError} />
+
+                {
+                  !isTerminado &&
+                  <>
+                    <Boton contenido={'Terminar (Tecla T)'} width={'100%'} callback={() => { setIsTerminado(!isTerminado); setMensaje(MENSAJE_PROGRAMA_TERMINADO); }} />
+                  </>
+                }
+              </Flex>
+            }
+            <Center mt={5}>
+              <Box fontSize={15}>{mensaje}</Box>
+            </Center>
           </Box>
         </ContenedorSeccion>
       </GridItem>
