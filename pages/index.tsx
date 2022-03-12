@@ -127,7 +127,6 @@ const Home: NextPage = () => {
 
         if (isTerminado === true ) { /*abriendo y cerrando después de que el programa terminó*/
           onOpen();
-console.log('asd');
           return;
         }
 
