@@ -5,7 +5,7 @@ export type Operacion = '+' | '-' | '/' | '*' | '%';
 export type Estado = 'Nuevo'| 'Listo' | 'Ejecucion' | 'Bloqueado' | 'Terminado';
 
 export class Proceso {    
-    ID: number;
+    ID: string;
     tiempoMaximoEstimado: number;
     tiempoRestante: number;
     tiempoTotal: number;
@@ -25,7 +25,7 @@ export class Proceso {
     tiempoRespuesta: number;
 
 
-    constructor(ID: number, tiempoMaximoEstimado: number, tiempoRestante: number, tiempoTotal: number, operacion: Operacion, operando1: number,  operando2: number,  resultado: number,  estado: Estado, error: boolean){
+    constructor(ID: string, tiempoMaximoEstimado: number, tiempoRestante: number, tiempoTotal: number, operacion: Operacion, operando1: number,  operando2: number,  resultado: number,  estado: Estado, error: boolean){
         this.ID = ID;
         this.tiempoMaximoEstimado = tiempoMaximoEstimado;
         this.tiempoRestante = tiempoRestante;

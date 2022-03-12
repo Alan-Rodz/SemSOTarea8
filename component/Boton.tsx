@@ -14,7 +14,7 @@ export const Boton: React.FC<BotonProps> = ({ contenido, width, callback }) => {
         <Button
             width={width}
             borderRadius={GLOBAL_BORDER_RADIUS}
-            padding={10}
+            padding={5}
             bg={GLOBAL_SECONDARY_COLOR}
             onClick={callback}
         >

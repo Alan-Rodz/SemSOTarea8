@@ -16,12 +16,14 @@ export const ComponenteProceso: React.FC<ProcesoProps> = ({ width, proceso }) =>
             {
                 (proceso.estado === 'Nuevo' || proceso.estado === 'Listo') &&
                 <Box
-                    width={width}
+                    width={'width'}
                     borderRadius={GLOBAL_BORDER_RADIUS}
-                    padding={10}
+                    padding={1}
                     mt={10}
+                    ml={10}
+                    mr={10}
                     bg={GLOBAL_SECONDARY_COLOR}
-                    fontSize={20}
+                    fontSize={15}
                 >
                     <Box>
                         {(proceso.estado === 'Nuevo' || proceso.estado === 'Listo')
@@ -43,10 +45,12 @@ export const ComponenteProceso: React.FC<ProcesoProps> = ({ width, proceso }) =>
                 <Box
                     width={width}
                     borderRadius={GLOBAL_BORDER_RADIUS}
-                    padding={10}
+                    padding={1}
                     mt={10}
+                    ml={10}
+                    mr={10}
                     bg={GLOBAL_SECONDARY_COLOR}
-                    fontSize={20}
+                    fontSize={15}
                 >
                     <Box>
                         {(proceso.estado === 'Ejecucion' && proceso.error === false)
@@ -70,10 +74,12 @@ export const ComponenteProceso: React.FC<ProcesoProps> = ({ width, proceso }) =>
                 <Box
                     width={width}
                     borderRadius={GLOBAL_BORDER_RADIUS}
-                    padding={10}
+                    padding={1}
                     mt={10}
+                    ml={10}
+                    mr={10}
                     bg={GLOBAL_SECONDARY_COLOR}
-                    fontSize={20}
+                    fontSize={15}
                 >
                     <Box>
                         {(proceso.estado === 'Bloqueado' && proceso.error === false)
@@ -91,10 +97,12 @@ export const ComponenteProceso: React.FC<ProcesoProps> = ({ width, proceso }) =>
                 <Box
                     width={width}
                     borderRadius={GLOBAL_BORDER_RADIUS}
-                    padding={10}
+                    padding={1}
                     mt={10}
+                    ml={10}
+                    mr={10}
                     bg={GLOBAL_SECONDARY_COLOR}
-                    fontSize={20}
+                    fontSize={15}
                 >
                     <Box>
                         {(proceso.estado === 'Terminado' && proceso.error === false)

@@ -5,32 +5,12 @@ import { GLOBAL_BORDER_RADIUS, GLOBAL_SECONDARY_COLOR } from '../pages'
 import { TituloSeccion } from './seccion/TituloSeccion'
 
 // ********************************************************************************
-interface SeccionInformacionProps {
-  valorReloj: number;
-}
-
-export const SeccionInformacion: React.FC<SeccionInformacionProps> = ({ valorReloj }) => {
+export const SeccionInformacion: React.FC = () => {
   return (
     <>
       <TituloSeccion nombreSeccion={`Información`} />
       <Box w='100%' h='100%' py={2} borderColor='gray.300'>
         <Flex mt={50} flexDir={'column'}>
-          <Center>
-            <Box
-              width={'50%'}
-              borderRadius={GLOBAL_BORDER_RADIUS}
-              mt={6}
-              padding={3}
-              bg={GLOBAL_SECONDARY_COLOR}
-              fontSize={15}
-            >
-              <Center>
-                Reloj: {valorReloj}
-              </Center>
-
-            </Box>
-          </Center>
-
           <Center>
             <Box
               width={'75%'}

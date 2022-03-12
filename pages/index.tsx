@@ -1,4 +1,4 @@
-import { Box, Center, Flex, Grid, GridItem, Input } from '@chakra-ui/react';
+import { Box, Grid, GridItem, useDisclosure } from '@chakra-ui/react';
 import { Observable } from 'rxjs'
 import type { NextPage } from 'next';
 
@@ -12,11 +12,14 @@ import { SeccionNuevos } from '../component/seccion/SeccionNuevos';
 import { SeccionBloqueados } from '../component/seccion/SeccionBloqueados';
 import { SeccionTerminados } from '../component/seccion/SeccionTerminados';
 import { SeccionInformacion } from '../component/SeccionInformacion';
-import { Boton } from '../component/Boton';
+import { SeccionControles } from '../component/seccion/SeccionControles';
+import { ModalProcesos } from '../component/ModalProcesos';
 
 // *****************************************************************************************************************************
-const VELOCIDAD = 1000;
-const MENSAJE_PROGRAMA_TERMINADO = 'Programa Finalizado';
+const VELOCIDAD = 100;
+export const MENSAJE_PROGRAMA_TERMINADO = 'Programa Finalizado';
+const teclasValidas = ['Enter', 'KeyC', 'KeyP', 'KeyI', 'KeyE', 'KeyT', 'KeyN', 'KeyB'];
+
 export const GLOBAL_COLOR = '#DAF7DC';
 export const GLOBAL_SECONDARY_COLOR = '#84DCC6';
 export const GLOBAL_BORDER_RADIUS = 15;
@@ -32,45 +35,113 @@ const observableSistemaOperativo$: Observable<SistemaOperativo> = new Observable
 const Home: NextPage = () => {
 
   // --- State ------------------------------------------------------------------------------------
+  const [inputValue, setInputValue] = useState<string>('');
+
   const [sistemaOperativoMostrado, setSistemaOperativoMostrado] = useState<SistemaOperativo>(sistemaOperativoOriginal);
-  const [isInterrupcion, setIsInterrupcion] = useState<boolean>(false);
-  const [isError, setIsError] = useState<boolean>(false);
+  const [isEvaluado, setIsEvaluado] = useState<boolean>(false);
+  const [isComenzado, setIsComenzado] = useState<boolean>(false);
+
   const [isPausa, setIsPausa] = useState<boolean>(false);
+  const [isInterrupcion, setIsInterrupcion] = useState<boolean>(false);
+
+  const [isError, setIsError] = useState<boolean>(false);
+  const [isTerminado, setIsTerminado] = useState<boolean>(false);
+
   const [isNuevoProceso, setIsNuevoProceso] = useState<boolean>(false);
   const [isTablaProcesos, setIsTablaProcesos] = useState<boolean>(false);
 
-  const [inputValue, setInputValue] = useState<string>('');
   const [mensaje, setMensaje] = useState<string>('');
+  const [trigger, setTrigger] = useState<number>(0);
 
-  const [isEvaluado, setIsEvaluado] = useState<boolean>(false);
-  const [isComenzado, setIsComenzado] = useState<boolean>(false);
-  const [isTerminado, setIsTerminado] = useState<boolean>(false);
-
-
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // --- Effects ------------------------------------------------------------------------------------
-  useEffect(() => {
+  useEffect(() => { /*actualizar estado del SO*/
     const modificarEstadoSO = setInterval(() => {
-      // Modificar SO 
-    });
+
+      sistemaOperativoOriginal.procesarAccion(isEvaluado, isComenzado, isPausa, isInterrupcion,
+        setIsInterrupcion, isError, setIsError, isTerminado, setIsTerminado, isNuevoProceso, setIsNuevoProceso, setMensaje);
+
+      setTrigger(trigger + 1);
+    }, VELOCIDAD);
+
     return () => clearInterval(modificarEstadoSO);
   });
 
+  useEffect(() => { /*actualizar el estado visual*/
+    observableSistemaOperativo$.subscribe({
+      next: estadoSO => {
+        const newEstadoSO = { ...estadoSO };
+        setSistemaOperativoMostrado(newEstadoSO as any /*NOTE: Look for bugs here*/);
+        setMensaje('');
+      },
+      error: err => console.log(err),
+      complete: () => { }
+    });
+  }, [trigger]);
+
   useEffect(() => {
-    const actualizarSistemaOperativoMostrado = setInterval(() => {
-      observableSistemaOperativo$.subscribe({
-        next: estadoSO => {
-          const newEstadoSO = { ...estadoSO };
-          setSistemaOperativoMostrado(newEstadoSO as any /*NOTE: Look for bugs here*/);
-        },
-        error: err => console.log(err),
-        complete: () => { }
-      });
+    document.addEventListener('keydown', (e) => {
+      if (!teclasValidas.includes(e.code)) { return; }
 
-    }, VELOCIDAD);
+      /*else*/
+      if (e.code === 'KeyC') {
+        e.preventDefault();
 
-    return () => clearInterval(actualizarSistemaOperativoMostrado);
-  });
+        if (isEvaluado === false) { /*no se ha evaluado el programa todavía*/
+          return;
+        }
+
+        if (isComenzado === false) { /*primera ejecución del programa*/
+          setIsComenzado(!isComenzado);
+          return;
+        }
+        
+        if (isComenzado === true && isPausa === true) { /*regresando de la tabla de procesos*/
+          onClose();
+          setIsPausa(!isPausa);
+        }
+        
+        
+        else { return; } /*ninguno de los casos anteriores*/
+      }
+
+      if (e.code === 'KeyP') { e.preventDefault(); if (isComenzado === true) { setIsPausa(!isPausa); return; } else { return; } }
+
+      if (e.code === 'KeyI') {
+        e.preventDefault();
+        if (isComenzado === true && isInterrupcion === false) {
+          setIsInterrupcion(!isInterrupcion);
+          return;
+        } else {
+          return;
+        }
+      }
+
+      if (e.code === 'KeyE') { e.preventDefault(); if (isComenzado === true) { handleError(); setMensaje('Si hay un proceso en ejecución y la memoria está llena, será marcado como error.'); } else { return; } }
+      if (e.code === 'KeyT') { e.preventDefault(); if (isComenzado === true) { setIsTerminado(!isTerminado); setMensaje(MENSAJE_PROGRAMA_TERMINADO); } else { return; } }
+      if (e.code === 'KeyN') { e.preventDefault(); if (isComenzado === true) { setIsNuevoProceso(!isNuevoProceso); setMensaje('Agregando Proceso...'); } else { return; } }
+
+      if (e.code === 'KeyB') {
+        e.preventDefault();
+
+        if (isTerminado === true ) { /*abriendo y cerrando después de que el programa terminó*/
+          onOpen();
+console.log('asd');
+          return;
+        }
+
+        if (isComenzado === true) {
+          if (isPausa === true) { return; } /*ignorar mientras la tabla de procesos está abierta porque se cierra con C*/
+
+          setIsPausa(!isPausa); /*caso normal, se abre la tabla de procesos*/
+          onOpen();
+
+        } else { return; }
+      }
+
+    })
+  })
 
   // --- Handlers --------------------------------------------------------------------------------------
   const handleChange = (e: React.FormEvent<HTMLInputElement>) => { setInputValue((e.target as HTMLInputElement).value); }
@@ -91,6 +162,10 @@ const Home: NextPage = () => {
 
   return (
     <Grid h='100vh' templateRows='repeat(10, 1fr)' templateColumns='repeat(10, 1fr)'>
+      {/* === Modal Tabla Procesos =============================================================================================================== */}
+      <ModalProcesos isOpen={isOpen} onClose={onClose} isPausa={isPausa} isTerminado={isTerminado} setIsPausa={setIsPausa} sistemaOperativoActual={sistemaOperativoMostrado} />
+
+      {/* === Ejecución =============================================================================================================== */}
       <GridItem
         overflowX={'scroll'}
         overflowY={'scroll'}
@@ -115,60 +190,47 @@ const Home: NextPage = () => {
         bg={GLOBAL_COLOR}
         borderRadius={GLOBAL_BORDER_RADIUS}>
 
+        {/* === Controles =============================================================================================================== */}
         <ContenedorSeccion>
-          <TituloSeccion nombreSeccion='Controles' />
-          <Box w='100%' h='100%' py={2} borderColor='gray.300'>
-            <Center>
-              {!isEvaluado &&
-                <Input
-                  m={10}
-                  mt={50}
-                  placeholder={'Cantidad de procesos...'}
-                  value={inputValue}
-                  onChange={handleChange}
-                  borderRadius={GLOBAL_BORDER_RADIUS}
-                  padding={5}
-                />
-              }
-            </Center>
-
-            {
-              !isEvaluado
-                ?
-                <Center>
-                  <Boton contenido={'Evaluar Cantidad (Dar Click Aquí)'} width={'50%'} callback={handleEvaluar} />
-                </Center>
-                : null
-            }
-
-            {
-              (isEvaluado && !isComenzado) &&
-              <Flex mt={10}>
-                <Boton contenido={'Comenzar (Tecla C)'} width={'100%'} callback={() => setIsComenzado(!isComenzado)} />
-              </Flex>
-            }
-
-            {(isComenzado && !isTerminado) &&
-              <Flex mt={10}>
-                <Boton contenido={`${isPausa ? 'Continuar (Tecla P)' : 'Pausar (Tecla P)'}`} width={'100%'} callback={() => setIsPausa(!isPausa)} />
-                <Boton contenido={'Interrupción (Tecla I)'} width={'100%'} callback={handleInterrupcion} />
-                <Boton contenido={'Marcar Error (Tecla E)'} width={'100%'} callback={handleError} />
-
-                {
-                  !isTerminado &&
-                  <>
-                    <Boton contenido={'Terminar (Tecla T)'} width={'100%'} callback={() => { setIsTerminado(!isTerminado); setMensaje(MENSAJE_PROGRAMA_TERMINADO); }} />
-                  </>
-                }
-              </Flex>
-            }
-            <Center mt={5}>
-              <Box fontSize={15}>{mensaje}</Box>
-            </Center>
-          </Box>
+          <TituloSeccion nombreSeccion={`Controles`} />
+          <>
+            <Box
+              transform='translateX(-50%)'
+              left='79%'
+              position={'absolute'}
+              bg={GLOBAL_SECONDARY_COLOR}
+              borderRadius={GLOBAL_BORDER_RADIUS}
+              mt={5}
+              padding={3}
+              fontSize={15}
+            >
+              {`Reloj: ${sistemaOperativoMostrado.getReloj()}`}
+            </Box>
+          </>
+          <SeccionControles
+            isPausa={isPausa}
+            setIsPausa={setIsPausa}
+            isNuevoProceso={isNuevoProceso}
+            setIsNuevoProceso={setIsNuevoProceso}
+            inputValue={inputValue}
+            mensaje={mensaje}
+            setMensaje={setMensaje}
+            isEvaluado={isEvaluado}
+            setIsEvaluado={setIsEvaluado}
+            isComenzado={isComenzado}
+            setIsComenzado={setIsComenzado}
+            isTerminado={isTerminado}
+            setIsTerminado={setIsTerminado}
+            handleChange={handleChange}
+            handleInterrupcion={handleInterrupcion}
+            handleError={handleError}
+            handleEvaluar={handleEvaluar}
+            abrirTablaProcesos={onOpen}
+          />
         </ContenedorSeccion>
       </GridItem>
 
+      {/* === Listos =============================================================================================================== */}
       <GridItem
         overflowX={'scroll'}
         overflowY={'scroll'}
@@ -184,6 +246,8 @@ const Home: NextPage = () => {
         </ContenedorSeccion>
       </GridItem>
 
+
+      {/* === Nuevos =============================================================================================================== */}
       <GridItem
         overflowX={'scroll'}
         overflowY={'scroll'}
@@ -199,6 +263,7 @@ const Home: NextPage = () => {
         </ContenedorSeccion>
       </GridItem>
 
+      {/* === Bloqueados =============================================================================================================== */}
       <GridItem
         overflowX={'scroll'}
         overflowY={'scroll'}
@@ -213,6 +278,7 @@ const Home: NextPage = () => {
         </ContenedorSeccion>
       </GridItem>
 
+      {/* === Terminados =============================================================================================================== */}
       <GridItem
         overflowX={'scroll'}
         overflowY={'scroll'}
@@ -228,6 +294,7 @@ const Home: NextPage = () => {
         </ContenedorSeccion>
       </GridItem>
 
+      {/* === Información =============================================================================================================== */}
       <GridItem
         overflowX={'scroll'}
         overflowY={'scroll'}
@@ -239,7 +306,7 @@ const Home: NextPage = () => {
         bg={GLOBAL_COLOR}
         borderRadius={GLOBAL_BORDER_RADIUS}>
         <ContenedorSeccion>
-          <SeccionInformacion valorReloj={sistemaOperativoMostrado.getReloj()} />
+          <SeccionInformacion />
         </ContenedorSeccion>
       </GridItem>
 
