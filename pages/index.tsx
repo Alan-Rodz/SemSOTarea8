@@ -16,7 +16,7 @@ import { SeccionControles } from '../component/seccion/SeccionControles';
 import { ModalProcesos } from '../component/ModalProcesos';
 
 // *****************************************************************************************************************************
-const VELOCIDAD = 100;
+const VELOCIDAD = 500;
 export const MENSAJE_PROGRAMA_TERMINADO = 'Programa Finalizado';
 const teclasValidas = ['Enter', 'KeyC', 'KeyP', 'KeyI', 'KeyE', 'KeyT', 'KeyN', 'KeyB'];
 
