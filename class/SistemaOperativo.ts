@@ -52,7 +52,7 @@ export class SistemaOperativo {
 
             // ... Interrupcion .......................................................................................................
             if (isInterrupcion === true) { 
-                if (!this.procesoEnEjecucion || (this.procesosBloqueados.length + this.procesosListos.length >= 5) ) {  setIsInterrupcion(!isInterrupcion); return;  }
+                if (!this.procesoEnEjecucion || (this.procesosBloqueados.length + this.procesosListos.length >= 4) ) {  setIsInterrupcion(!isInterrupcion); return;  }
                 const procesoInterrumpido = this.procesoEnEjecucion;
                 procesoInterrumpido.estado = 'Bloqueado';
                 this.procesosBloqueados.push(procesoInterrumpido);
@@ -95,7 +95,7 @@ export class SistemaOperativo {
             // ... Comportamiento Default .............................................................................................
             if (this.procesosBloqueados.length !== 0) { this.procesarBloqueados(); }
 
-            if (this.procesosListos.length < 5) { /*llenar procesos listos*/
+            if (this.procesosListos.length < 4) { /*llenar procesos listos*/
                 const procesoListo = this.procesosNuevos.shift();
                 if (procesoListo) { 
                     procesoListo.estado = 'Listo';
